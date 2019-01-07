@@ -41,6 +41,14 @@ namespace WindowsFormsApp2
             textBox6.Text = "Started Thread";
         }
 
+        //disconnect the connected client
+        private void disconnect() {
+            started = false;
+            tcpClient.GetStream().Close();
+            tcpClient.Close();
+            textBox6.Text = "Connection Closed";
+        }
+
         //send a message to TCP host (requires connection to be already established)
         private void send(string outbound) {
             byte[] bytes = Encoding.ASCII.GetBytes(outbound);
@@ -54,16 +62,22 @@ namespace WindowsFormsApp2
             //loop continously forever
             while (started) {
                 //check receive buffer for a message
-                if (tcpClient.ReceiveBufferSize > 0) {
-                    //allocate buffer size
-                    msg_rcv = new byte[tcpClient.ReceiveBufferSize];
-                    //use stream objecto read in the bytes[]
-                    stream.Read(msg_rcv, 0, tcpClient.ReceiveBufferSize);
-                    //conver to string for printing
-                    string msg = Encoding.ASCII.GetString(msg_rcv);
-                    //delegate pointer to a thread which already exists
-                    //this is required because this thread doesn't know where textBox3.Text lives.
-                    textBox3.Invoke(new textBox3_update_d(this.textBox3_update), new object[] { msg });
+                try {
+                    if (tcpClient.ReceiveBufferSize > 0)
+                    {
+                        //allocate buffer size
+                        msg_rcv = new byte[tcpClient.ReceiveBufferSize];
+                        //use stream objecto read in the bytes[]
+                        stream.Read(msg_rcv, 0, tcpClient.ReceiveBufferSize);
+                        //conver to string for printing
+                        string msg = Encoding.ASCII.GetString(msg_rcv);
+                        //delegate pointer to a thread which already exists
+                        //this is required because this thread doesn't know where textBox3.Text lives.
+                        textBox3.Invoke(new textBox3_update_d(this.textBox3_update), new object[] { msg });
+                    }
+                }
+                catch {
+                    //do nothing with the error
                 }
                 //just sleep arbitrarily to prevent overrun?
                 Thread.Sleep(1000);
@@ -147,6 +161,11 @@ namespace WindowsFormsApp2
         private void textBox6_TextChanged(object sender, EventArgs e)
         {
             //where debug information gets printed, do nothing here
+        }
+
+        private void button1_Click_1(object sender, EventArgs e)
+        {
+            disconnect();
         }
     }
 }
